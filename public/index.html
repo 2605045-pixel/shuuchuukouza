@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BomberLAN - ボンバーマン マルチプレイヤー</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- ヘッダー -->
+    <header class="game-header">
+      <div class="logo">
+        <span class="bomb-icon">💣</span> Bomber<span class="accent">LAN</span>
+      </div>
+      <div class="header-controls">
+        <button id="copyInviteHeaderBtn" class="icon-btn" title="LAN共有リンクをコピー">🔗 共有リンク</button>
+        <button id="soundToggleBtn" class="icon-btn" title="サウンド切替">🔊</button>
+        <button id="controlsHelpBtn" class="icon-btn" title="操作説明">❓</button>
+      </div>
+    </header>
+
+    <!-- ロビー画面 -->
+    <div id="lobbyScreen" class="screen active">
+      <div class="lobby-card">
+        <h2>ルームに参加</h2>
+        
+        <div class="form-group">
+          <label for="playerNameInput">プレイヤー名</label>
+          <input type="text" id="playerNameInput" placeholder="あなたの名前" maxlength="12" autofocus>
+        </div>
+
+        <div class="form-group">
+          <label for="roomInput">ルーム名</label>
+          <input type="text" id="roomInput" value="main" maxlength="16">
+        </div>
+
+        <button id="joinBtn" class="btn primary-btn full-width">ロビーに入る</button>
+      </div>
+
+      <!-- 招待・QRコード表示エリア -->
+      <div class="lobby-card invite-card" id="inviteSection">
+        <h3>📱 他のプレイヤーを招待</h3>
+        <p class="invite-desc" id="inviteDescText">スマホのカメラでQRコードを読み取るか、以下のリンクを共有してください：</p>
+        
+        <div class="qr-container">
+          <img id="qrCodeImg" alt="参加用QRコード" src="">
+        </div>
+
+        <div class="url-copy-box">
+          <input type="text" id="inviteUrlInput" readonly>
+          <button id="copyUrlBtn" class="btn secondary-btn">コピー</button>
+        </div>
+
+        <div id="codespacesNotice" class="codespaces-tip" style="display: none;">
+          💡 <strong>GitHub Codespaces をご利用の場合:</strong><br>
+          他のプレイヤーが接続できるように、VS Code下部の「<strong>PORTS</strong>」タブでポート <strong>3000</strong> の可視性を「<strong>Public</strong>」に変更してください。
+        </div>
+      </div>
+
+      <!-- 待機中プレイヤーリスト -->
+      <div class="lobby-card players-card" id="lobbyPlayersSection" style="display: none;">
+        <h3>参加プレイヤー (<span id="playerCount">0</span>/8)</h3>
+        <ul id="lobbyPlayerList" class="player-list"></ul>
+
+        <div class="host-actions">
+          <button id="startGameBtn" class="btn start-btn full-width" style="display: none;">ゲーム開始！</button>
+          <p id="waitingHostNotice" class="waiting-text" style="display: none;">ホストが開始するのを待っています...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="gameScreen" class="screen">
+      <!-- ゲームHUD -->
+      <div class="game-hud">
+        <div class="hud-item player-info">
+          <span class="player-color-dot" id="myColorDot"></span>
+          <span id="myNameDisplay">Player</span>
+          <span id="myStatusBadge" class="status-badge alive">ALIVE</span>
+        </div>
+
+        <!-- プレイヤーステータス（パワーアップ） -->
+        <div class="hud-item stats-container">
+          <div class="stat-badge" title="設置可能爆弾数">
+            <span class="stat-icon">💣</span>
+            <span id="statBombs">1</span>
+          </div>
+          <div class="stat-badge" title="爆風の範囲">
+            <span class="stat-icon">🔥</span>
+            <span id="statRange">1</span>
+          </div>
+          <div class="stat-badge" title="移動速度">
+            <span class="stat-icon">👟</span>
+            <span id="statSpeed">3.2</span>
+          </div>
+          <div class="stat-badge kick-badge" id="statKickBadge" title="爆弾キック機能">
+            <span class="stat-icon">⚡</span>
+            <span id="statKickText">KICK OFF</span>
+          </div>
+        </div>
+
+        <!-- スコアボード一覧 -->
+        <div class="hud-item score-list" id="hudScoreList"></div>
+      </div>
+
+      <!-- キャンバス表示領域 -->
+      <div class="canvas-wrapper">
+        <canvas id="gameCanvas" width="720" height="624"></canvas>
+      </div>
+
+      <!-- モバイル用オンスクリーンコントローラー -->
+      <div id="mobileControls" class="mobile-controls">
+        <div class="dpad">
+          <button class="dpad-btn dpad-up" data-dir="up">▲</button>
+          <div class="dpad-middle">
+            <button class="dpad-btn dpad-left" data-dir="left">◀</button>
+            <div class="dpad-center"></div>
+            <button class="dpad-btn dpad-right" data-dir="right">▶</button>
+          </div>
+          <button class="dpad-btn dpad-down" data-dir="down">▼</button>
+        </div>
+
+        <div class="action-buttons">
+          <button id="mobileBombBtn" class="bomb-action-btn">
+            <span class="bomb-symbol">💣</span>
+            <span class="bomb-label">BOMB</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ゲームオーバー / 勝利モーダル -->
+    <div id="gameOverModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-icon" id="modalIcon">🏆</div>
+        <h2 id="modalTitle">VICTORY!</h2>
+        <p id="modalSubtitle">Player 1 が勝利しました！</p>
+
+        <div class="modal-scores">
+          <h3>現在のスコア</h3>
+          <ul id="modalScoreList"></ul>
+        </div>
+
+        <div class="modal-actions">
+          <button id="modalRestartBtn" class="btn start-btn full-width">もう一回プレイ！</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作方法モーダル -->
+    <div id="helpModal" class="modal-overlay">
+      <div class="modal-content help-content">
+        <h2>🎮 操作方法 & ルール</h2>
+        <div class="help-section">
+          <h3>【操作方法】</h3>
+          <p><strong>PC:</strong> 移動: <code>WASD</code> または <code>矢印キー</code> / 爆弾設置: <code>スペースキー</code></p>
+          <p><strong>スマホ:</strong> 画面下の仮想パッドで移動 & 💣ボタンで設置</p>
+        </div>
+        <div class="help-section">
+          <h3>【メカニクス】</h3>
+          <p><strong>⚡ 爆弾キック:</strong> キック能力を持つプレイヤーは、爆弾に向かって歩くことで爆弾を前方に滑らせることができます！</p>
+          <p><strong>アイテム:</strong> ブロックを破壊するとパワーアップが出現！</p>
+          <ul>
+            <li>🔥 <strong>ファイア:</strong> 爆風の射程 +1</li>
+            <li>💣 <strong>ボム:</strong> 置ける爆弾の数 +1</li>
+            <li>👟 <strong>スピード:</strong> 移動速度 +0.5</li>
+            <li>⚡ <strong>キック:</strong> 爆弾を押し出すキック能力解放！</li>
+          </ul>
+        </div>
+        <button id="closeHelpBtn" class="btn secondary-btn full-width">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

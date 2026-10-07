@@ -1,0 +1,610 @@
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --border-color: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent-blue: #3b82f6;
+  --accent-red: #ef4444;
+  --accent-green: #10b981;
+  --accent-yellow: #f59e0b;
+  --accent-gold: #fbbf24;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  overflow-x: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* ヘッダー */
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background-color: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.logo .accent {
+  color: var(--accent-yellow);
+}
+
+.header-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: var(--border-color);
+}
+
+/* 画面切り替え */
+.screen {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  padding: 16px;
+  align-items: center;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* ロビー画面 */
+#lobbyScreen {
+  gap: 16px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.lobby-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.lobby-card h2, .lobby-card h3 {
+  margin-bottom: 14px;
+  color: var(--text-main);
+}
+
+.form-group {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.form-group input {
+  padding: 10px 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 1rem;
+  outline: none;
+}
+
+.form-group input:focus {
+  border-color: var(--accent-blue);
+}
+
+/* ボタン */
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s, background-color 0.2s;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.primary-btn {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.primary-btn:hover {
+  background: #2563eb;
+}
+
+.secondary-btn {
+  background: var(--border-color);
+  color: var(--text-main);
+}
+
+.secondary-btn:hover {
+  background: #475569;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 1.15rem;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.start-btn:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* 招待 & QRコード */
+.invite-card {
+  text-align: center;
+}
+
+.invite-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.qr-container {
+  display: inline-block;
+  background: #fff;
+  padding: 10px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.qr-container img {
+  display: block;
+  width: 170px;
+  height: 170px;
+}
+
+.url-copy-box {
+  display: flex;
+  gap: 8px;
+}
+
+.url-copy-box input {
+  flex: 1;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text-main);
+  font-size: 0.85rem;
+}
+
+/* プレイヤーリスト */
+.player-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.player-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-primary);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 5px solid var(--accent-blue);
+}
+
+.player-info-tag {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.host-badge {
+  background: var(--accent-yellow);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.you-badge {
+  background: var(--accent-blue);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.waiting-text {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* ゲーム画面 */
+#gameScreen {
+  padding: 8px;
+  gap: 8px;
+}
+
+.game-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 720px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 8px 14px;
+  gap: 8px;
+}
+
+.player-color-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+}
+
+.status-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.status-badge.alive {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+}
+
+.status-badge.dead {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--accent-red);
+  border: 1px solid var(--accent-red);
+}
+
+.stats-container {
+  display: flex;
+  gap: 6px;
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.stat-badge.kick-badge {
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
+
+.stat-badge.kick-badge.active {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  text-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+}
+
+.score-list {
+  display: flex;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.score-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* キャンバス */
+.canvas-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 720px;
+}
+
+#gameCanvas {
+  background: #1e293b;
+  border: 3px solid #334155;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 720 / 624;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* モバイル用コントローラー */
+.mobile-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;
+  margin-top: 10px;
+  padding: 0 10px;
+  touch-action: none;
+}
+
+.dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dpad-middle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dpad-btn {
+  width: 54px;
+  height: 54px;
+  background: #334155;
+  border: 2px solid #475569;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.dpad-btn:active, .dpad-btn.pressed {
+  background: var(--accent-blue);
+  border-color: #60a5fa;
+  transform: scale(0.94);
+}
+
+.dpad-center {
+  width: 50px;
+  height: 50px;
+  background: #1e293b;
+  border-radius: 8px;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.bomb-action-btn {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b);
+  border: 3px solid #f87171;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.bomb-action-btn:active {
+  transform: scale(0.92);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+}
+
+.bomb-symbol {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.bomb-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+/* モーダル */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  animation: modalPop 0.25s ease-out;
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.modal-icon {
+  font-size: 3rem;
+  margin-bottom: 8px;
+}
+
+.modal-scores {
+  margin: 16px 0;
+  background: var(--bg-primary);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.modal-scores h3 {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.modal-scores ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-scores li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.help-content {
+  text-align: left;
+}
+
+.help-content h2 {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.help-section {
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.help-section h3 {
+  color: var(--accent-yellow);
+  margin-bottom: 6px;
+}
+
+.help-section ul {
+  margin-left: 20px;
+  margin-top: 6px;
+}
+
+code {
+  background: var(--bg-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent-blue);
+  font-family: monospace;
+}
+
+@media (min-width: 768px) {
+  .mobile-controls {
+    display: none; /* PC環境では仮想コントローラーを非表示にしてキーボード操作を推奨 */
+  }
+}
+
+.codespaces-tip {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid var(--accent-blue);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #93c5fd;
+  text-align: left;
+  line-height: 1.5;
+}
+
+.codespaces-tip strong {
+  color: #fff;
+}
