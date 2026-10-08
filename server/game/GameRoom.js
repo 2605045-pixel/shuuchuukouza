@@ -392,9 +392,9 @@ class GameRoom {
   }
 
   broadcastGameState() {
+    // マップグリッドは変更があった時だけ送信し、毎tick全送信を避ける（データ量削減）
     const payload = {
       state: this.state,
-      grid: this.map.grid,
       items: this.map.items,
       players: [...this.players.values()].map(p => p.toDTO()),
       bombs: [...this.bombs.values()].map(b => b.toDTO()),
@@ -405,8 +405,16 @@ class GameRoom {
       })),
       hostSocketId: this.hostSocketId,
     };
+
+    // マップが変更された（ブロック破壊など）場合のみ grid を付与
+    if (this.map.dirty) {
+      payload.grid = this.map.grid;
+      this.map.dirty = false;
+    }
+
     this.io.to(this.roomId).emit('game_state', payload);
   }
+
 
   broadcastLobbyState() {
     const payload = {
