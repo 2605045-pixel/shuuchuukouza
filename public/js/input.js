@@ -1,7 +1,9 @@
 class InputManager {
-  constructor(onInputChange, onBombPress) {
+  constructor(onInputChange, onBombPress, onRevivePress, onEscPress) {
     this.onInputChange = onInputChange;
     this.onBombPress = onBombPress;
+    this.onRevivePress = onRevivePress;
+    this.onEscPress = onEscPress;
 
     this.state = {
       up: false,
@@ -52,6 +54,17 @@ class InputManager {
         case 'KeyJ':
           if (!e.repeat && this.onBombPress) {
             this.onBombPress();
+          }
+          break;
+        case 'KeyR':
+        case 'KeyE':
+          if (!e.repeat && this.onRevivePress) {
+            this.onRevivePress();
+          }
+          break;
+        case 'Escape':
+          if (!e.repeat && this.onEscPress) {
+            this.onEscPress();
           }
           break;
         default:
@@ -145,6 +158,19 @@ class InputManager {
 
       bombBtn.addEventListener('touchstart', handleBomb, { passive: false });
       bombBtn.addEventListener('click', handleBomb);
+    }
+
+    const reviveBtn = document.getElementById('mobileReviveBtn');
+    if (reviveBtn) {
+      const handleRevive = (e) => {
+        e.preventDefault();
+        if (this.onRevivePress) {
+          this.onRevivePress();
+        }
+      };
+
+      reviveBtn.addEventListener('touchstart', handleRevive, { passive: false });
+      reviveBtn.addEventListener('click', handleRevive);
     }
   }
 }

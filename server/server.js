@@ -174,6 +174,44 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('use_revive', () => {
+    if (!currentRoomId) return;
+    const room = rooms.get(currentRoomId);
+    if (room) {
+      const res = room.reviveTeammate(socket.id);
+      if (!res.success && res.message) {
+        socket.emit('toast_message', res.message);
+      }
+    }
+  });
+
+  socket.on('set_game_mode', ({ mode }) => {
+    if (!currentRoomId) return;
+    const room = rooms.get(currentRoomId);
+    if (room && room.hostSocketId === socket.id) {
+      room.setGameMode(mode);
+    }
+  });
+
+  socket.on('set_map_theme', ({ theme }) => {
+    if (!currentRoomId) return;
+    const room = rooms.get(currentRoomId);
+    if (room && room.hostSocketId === socket.id) {
+      room.setMapTheme(theme);
+    }
+  });
+
+  socket.on('join_team', ({ team }) => {
+    if (!currentRoomId) return;
+    const room = rooms.get(currentRoomId);
+    if (room) {
+      const res = room.setPlayerTeam(socket.id, team);
+      if (res && !res.success) {
+        socket.emit('error_message', res.message);
+      }
+    }
+  });
+
   socket.on('start_game', () => {
     if (!currentRoomId) return;
     const room = rooms.get(currentRoomId);
@@ -190,6 +228,36 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoomId);
     if (room) {
       room.restartGame(socket.id);
+    }
+  });
+
+  socket.on('give_up', () => {
+    if (!currentRoomId) return;
+    const room = rooms.get(currentRoomId);
+    if (room) {
+      const res = room.giveUp(socket.id);
+      if (!res.success && res.message) {
+        socket.emit('toast_message', res.message);
+      }
+    }
+  });
+
+  socket.on('vote_map_change', ({ theme }) => {
+    if (!currentRoomId) return;
+    const room = rooms.get(currentRoomId);
+    if (room) {
+      const res = room.startMapVote(socket.id, theme);
+      if (!res.success && res.message) {
+        socket.emit('toast_message', res.message);
+      }
+    }
+  });
+
+  socket.on('cast_map_vote', ({ agree }) => {
+    if (!currentRoomId) return;
+    const room = rooms.get(currentRoomId);
+    if (room) {
+      room.castMapVote(socket.id, agree);
     }
   });
 

@@ -1,18 +1,22 @@
 const { GRID_COLS, GRID_ROWS, TILE_TYPES, ITEM_TYPES, SPAWN_POINTS } = require('./constants');
 
 class GameMap {
-  constructor() {
+  constructor(theme = 'cyber') {
     this.cols = GRID_COLS;
     this.rows = GRID_ROWS;
     this.grid = [];
     this.items = []; // { id, col, row, type }
     this.nextItemId = 1;
+    this.gridVersion = 1;
+    this.theme = theme;
     this.generate();
   }
 
-  generate() {
+  generate(theme) {
+    if (theme) this.theme = theme;
     this.grid = [];
     this.items = [];
+    this.gridVersion++;
 
     // スポーン地点とその隣接マス（プレイヤーが動けるようブロックを置かない）
     const protectedCells = new Set();
@@ -74,20 +78,23 @@ class GameMap {
     if (!this.isInside(c, r)) return null;
     if (this.grid[r][c] === TILE_TYPES.BLOCK) {
       this.grid[r][c] = TILE_TYPES.EMPTY;
+      this.gridVersion++; // マップ変更検知用
 
-      // 約50%の確率でアイテムドロップ
-      if (Math.random() < 0.50) {
-        // 重み付け: FIRE 30%, BOMB 30%, SPEED 20%, KICK 20%
+      // 約55%の確率でアイテムドロップ
+      if (Math.random() < 0.55) {
+        // 重み付け: FIRE 25%, BOMB 25%, SPEED 20%, KICK 15%, REVIVE 15%
         const rand = Math.random();
         let selectedType = ITEM_TYPES.FIRE;
-        if (rand < 0.30) {
+        if (rand < 0.25) {
           selectedType = ITEM_TYPES.FIRE;
-        } else if (rand < 0.60) {
+        } else if (rand < 0.50) {
           selectedType = ITEM_TYPES.BOMB;
-        } else if (rand < 0.80) {
+        } else if (rand < 0.70) {
           selectedType = ITEM_TYPES.SPEED;
-        } else {
+        } else if (rand < 0.85) {
           selectedType = ITEM_TYPES.KICK;
+        } else {
+          selectedType = ITEM_TYPES.REVIVE;
         }
 
         const item = {

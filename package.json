@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server/server.js"
+    "start": "node server/server.js",
+    "test": "node server/game/test_team_revive.js && node server/game/test_3v3_perf.js"
   },
   "repository": {
     "type": "git",

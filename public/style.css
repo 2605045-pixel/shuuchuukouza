@@ -10,6 +10,7 @@
   --accent-green: #10b981;
   --accent-yellow: #f59e0b;
   --accent-gold: #fbbf24;
+  --accent-pink: #f43f5e;
 }
 
 * {
@@ -97,7 +98,7 @@ body {
 #lobbyScreen {
   gap: 16px;
   width: 100%;
-  max-width: 500px;
+  max-width: 540px;
   margin: 0 auto;
 }
 
@@ -127,21 +128,166 @@ body {
   color: var(--text-muted);
 }
 
-.form-group input {
+.form-group input, .form-select {
   padding: 10px 14px;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   color: var(--text-main);
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
 }
 
-.form-group input:focus {
+.form-group input:focus, .form-select:focus {
   border-color: var(--accent-blue);
 }
 
-/* ボタン */
+/* モード切替チップグループ */
+.mode-selector-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-chip {
+  flex: 1;
+  min-width: 110px;
+  padding: 8px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.mode-chip:hover:not(:disabled) {
+  border-color: var(--accent-blue);
+  color: var(--text-main);
+}
+
+.mode-chip.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-blue);
+  color: #60a5fa;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.mode-chip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* チーム選択パネル */
+.teams-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.team-panel {
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team-blue-panel {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.team-red-panel {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.team-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 6px;
+}
+
+.team-blue-panel .team-title {
+  color: #60a5fa;
+}
+
+.team-red-panel .team-title {
+  color: #f87171;
+}
+
+.team-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.team-roster {
+  list-style: none;
+  min-height: 55px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.team-roster-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.empty-slot-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 14px;
+  font-style: italic;
+}
+
+.team-join-btn {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.blue-btn {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.blue-btn:hover {
+  background: #2563eb;
+}
+
+.red-btn {
+  background: var(--accent-red);
+  color: #fff;
+}
+
+.red-btn:hover {
+  background: #dc2626;
+}
+
+/* ボタン基本 */
 .btn {
   padding: 12px 20px;
   border: none;
@@ -230,6 +376,21 @@ body {
 }
 
 /* プレイヤーリスト */
+.lobby-players-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.room-badge {
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
 .player-list {
   list-style: none;
   display: flex;
@@ -273,6 +434,30 @@ body {
   border-radius: 4px;
 }
 
+.you-badge.mini, .host-badge.mini {
+  font-size: 0.65rem;
+  padding: 1px 4px;
+}
+
+.team-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.team-blue-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid #3b82f6;
+}
+
+.team-red-badge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid #ef4444;
+}
+
 .waiting-text {
   color: var(--text-muted);
   font-size: 0.9rem;
@@ -280,12 +465,90 @@ body {
   margin-top: 10px;
 }
 
-/* ゲーム画面 */
+/* ==========================================
+   ゲーム画面 & HUD
+   ========================================== */
 #gameScreen {
   padding: 8px;
   gap: 8px;
+  width: 100%;
 }
 
+/* チーム戦マッチヘッダー */
+.team-match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 720px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 6px 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.team-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.team-bar-name {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.blue-team-bar .team-bar-name {
+  color: #60a5fa;
+}
+
+.red-team-bar .team-bar-name {
+  color: #f87171;
+}
+
+.team-bar-score {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #fff;
+  min-width: 20px;
+  text-align: center;
+}
+
+.vs-badge {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: var(--accent-yellow);
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.team-members-status {
+  display: flex;
+  gap: 5px;
+}
+
+.member-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: all 0.2s;
+}
+
+.member-dot.alive {
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+}
+
+.member-dot.dead {
+  background: #64748b;
+  opacity: 0.4;
+}
+
+/* ゲームHUD */
 .game-hud {
   display: flex;
   flex-wrap: wrap;
@@ -356,6 +619,56 @@ body {
   text-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
 }
 
+/* 復活バッジ */
+.stat-badge.revive-badge {
+  display: none;
+  color: #fff;
+  background: rgba(244, 63, 94, 0.2);
+  border-color: var(--accent-pink);
+}
+
+.stat-badge.revive-badge.active {
+  display: inline-flex;
+  animation: pulseRevive 1.5s infinite;
+}
+
+@keyframes pulseRevive {
+  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(244, 63, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+}
+
+/* HUD用復活アクションボタン */
+.hud-revive-btn {
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(244, 63, 94, 0.4);
+  transition: transform 0.1s;
+}
+
+.hud-revive-btn:hover {
+  background: #e11d48;
+}
+
+.hud-revive-btn:active {
+  transform: scale(0.95);
+}
+
+.hud-revive-btn.pulsing {
+  animation: buttonPulse 1s infinite alternate;
+}
+
+@keyframes buttonPulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  100% { transform: scale(1.05); filter: brightness(1.2); }
+}
+
 .score-list {
   display: flex;
   gap: 8px;
@@ -369,6 +682,57 @@ body {
   gap: 4px;
 }
 
+.team-blue-text {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.team-red-text {
+  color: #f87171;
+  font-weight: 600;
+}
+
+/* コンバットトースト / イベント通知 */
+.combat-toast {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--accent-blue);
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.25s ease-out;
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.combat-toast.active {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.toast-revive {
+  border-color: var(--accent-gold);
+  color: #fef08a;
+  background: rgba(24, 15, 30, 0.95);
+}
+
+.toast-danger {
+  border-color: var(--accent-red);
+  color: #fca5a5;
+}
+
+.toast-warning {
+  border-color: var(--accent-yellow);
+  color: #fde68a;
+}
+
 /* キャンバス */
 .canvas-wrapper {
   position: relative;
@@ -377,10 +741,11 @@ body {
   align-items: center;
   width: 100%;
   max-width: 720px;
+  contain: layout paint;
 }
 
 #gameCanvas {
-  background: #1e293b;
+  background: #0f172a;
   border: 3px solid #334155;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
@@ -389,6 +754,7 @@ body {
   aspect-ratio: 720 / 624;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  will-change: transform;
 }
 
 /* モバイル用コントローラー */
@@ -448,11 +814,12 @@ body {
 .action-buttons {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 .bomb-action-btn {
-  width: 86px;
-  height: 86px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b);
   border: 3px solid #f87171;
@@ -473,17 +840,53 @@ body {
 }
 
 .bomb-symbol {
-  font-size: 1.8rem;
+  font-size: 1.7rem;
   line-height: 1;
 }
 
 .bomb-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 1px;
 }
 
-/* モーダル */
+/* モバイル復活ボタン */
+.revive-action-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #f43f5e, #9f1239);
+  border: 3px solid #fb7185;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 6px 16px rgba(244, 63, 94, 0.5);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  animation: pulseRevive 1.2s infinite;
+}
+
+.revive-action-btn:active {
+  transform: scale(0.92);
+}
+
+.revive-symbol {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.revive-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================
+   モーダル
+   ========================================== */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -508,7 +911,7 @@ body {
   border-radius: 16px;
   padding: 24px;
   width: 90%;
-  max-width: 420px;
+  max-width: 440px;
   text-align: center;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
   animation: modalPop 0.25s ease-out;
@@ -522,6 +925,33 @@ body {
 .modal-icon {
   font-size: 3rem;
   margin-bottom: 8px;
+}
+
+.modal-team-score-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin: 12px 0;
+  font-size: 1rem;
+}
+
+.blue-score-text {
+  color: #60a5fa;
+  font-weight: 700;
+}
+
+.red-score-text {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.vs-divider {
+  color: var(--text-muted);
+  font-weight: bold;
 }
 
 .modal-scores {
@@ -589,7 +1019,7 @@ code {
 
 @media (min-width: 768px) {
   .mobile-controls {
-    display: none; /* PC環境では仮想コントローラーを非表示にしてキーボード操作を推奨 */
+    display: none;
   }
 }
 
@@ -607,4 +1037,171 @@ code {
 
 .codespaces-tip strong {
   color: #fff;
+}
+
+}
+
+/* ==========================================
+   ESCメニュー / ポーズモーダル
+   ========================================== */
+.pause-content {
+  max-width: 380px;
+}
+
+.pause-subtitle {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pause-actions h3 {
+  margin: 4px 0 8px;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.pause-divider {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 6px 0;
+}
+
+.map-vote-options {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.map-vote-btn {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-vote-btn:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.map-vote-btn:active {
+  transform: translateY(0);
+}
+
+.danger-btn {
+  background: rgba(220, 38, 38, 0.2) !important;
+  border: 1px solid rgba(239, 68, 68, 0.5) !important;
+  color: #fca5a5 !important;
+}
+
+.danger-btn:hover {
+  background: rgba(220, 38, 38, 0.5) !important;
+  border-color: #ef4444 !important;
+  color: #fff !important;
+}
+
+/* HUDオプションボタン */
+.hud-options-btn {
+  position: fixed;
+  top: 68px;
+  right: 12px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 50;
+  transition: all 0.2s;
+  backdrop-filter: blur(4px);
+}
+
+.hud-options-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: #60a5fa;
+  color: #fff;
+}
+
+/* マップ変更投票バナー */
+.map-vote-banner {
+  position: fixed;
+  top: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  border-radius: 12px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 60;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  animation: voteSlideIn 0.3s ease-out;
+}
+
+@keyframes voteSlideIn {
+  from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+.vote-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vote-title {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #e2e8f0;
+}
+
+.vote-status {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.vote-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.vote-yes-btn {
+  padding: 5px 12px !important;
+  font-size: 0.8rem !important;
+  background: rgba(16, 185, 129, 0.25) !important;
+  border: 1px solid rgba(16, 185, 129, 0.6) !important;
+  color: #6ee7b7 !important;
+  border-radius: 6px !important;
+}
+
+.vote-yes-btn:hover {
+  background: rgba(16, 185, 129, 0.5) !important;
+}
+
+.vote-no-btn {
+  padding: 5px 12px !important;
+  font-size: 0.8rem !important;
+  background: rgba(239, 68, 68, 0.2) !important;
+  border: 1px solid rgba(239, 68, 68, 0.5) !important;
+  color: #fca5a5 !important;
+  border-radius: 6px !important;
+}
+
+.vote-no-btn:hover {
+  background: rgba(239, 68, 68, 0.45) !important;
 }

@@ -199,6 +199,40 @@ class SoundManager {
     osc.stop(now + 0.4);
   }
 
+  // 復活（蘇生）音（神聖なチャイムの上昇和音）
+  playRevive() {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const chords = [
+      { f: 440.0, t: 0 },    // A4
+      { f: 554.37, t: 0.08 }, // C#5
+      { f: 659.25, t: 0.16 }, // E5
+      { f: 880.0, t: 0.24 },  // A5
+      { f: 1108.73, t: 0.35 } // C#6
+    ];
+
+    const now = this.ctx.currentTime;
+    chords.forEach(({ f, t }) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const startT = now + t;
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, startT);
+
+      gain.gain.setValueAtTime(0.28, startT);
+      gain.gain.exponentialRampToValueAtTime(0.005, startT + 0.4);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(startT);
+      osc.stop(startT + 0.4);
+    });
+  }
+
   // 勝利ファンファーレ
   playVictory() {
     if (this.muted) return;

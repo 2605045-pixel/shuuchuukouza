@@ -28,6 +28,19 @@ class Player {
 
     this.facing = 'down';
     this.isMoving = false;
+
+    // チーム所属 ('blue' | 'red' | null)
+    this.team = null;
+
+    // パワーアップ: 蘇生能力（1回使い切り）
+    this.hasRevive = false;
+
+    // 無敵状態 (復活直後など)
+    this.invulnerableUntil = 0;
+  }
+
+  isInvulnerable() {
+    return Date.now() < this.invulnerableUntil;
   }
 
   resetPosition() {
@@ -45,6 +58,8 @@ class Player {
     this.maxBombs = PLAYER_DEFAULTS.BASE_BOMBS;
     this.bombRange = PLAYER_DEFAULTS.BASE_RANGE;
     this.canKick = PLAYER_DEFAULTS.CAN_KICK;
+    this.hasRevive = false;
+    this.invulnerableUntil = 0;
     this.resetPosition();
   }
 
@@ -252,6 +267,9 @@ class Player {
       case ITEM_TYPES.KICK:
         this.canKick = true;
         break;
+      case ITEM_TYPES.REVIVE:
+        this.hasRevive = true;
+        break;
     }
   }
 
@@ -260,17 +278,21 @@ class Player {
       id: this.id,
       name: this.name,
       color: this.color,
+      team: this.team,
       x: Math.round(this.x),
       y: Math.round(this.y),
       alive: this.alive,
       score: this.score,
       facing: this.facing,
       isMoving: this.isMoving,
+      hasRevive: this.hasRevive,
+      isInvulnerable: this.isInvulnerable(),
       stats: {
         speed: Math.round(this.speed * 10) / 10,
         maxBombs: this.maxBombs,
         bombRange: this.bombRange,
         canKick: this.canKick,
+        hasRevive: this.hasRevive,
       },
     };
   }

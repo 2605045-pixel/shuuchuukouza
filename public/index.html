@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>BomberLAN - ボンバーマン マルチプレイヤー</title>
+  <title>BomberLAN - チーム対戦＆マルチプレイヤー</title>
   <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -23,7 +23,7 @@
 
     <!-- ロビー画面 -->
     <div id="lobbyScreen" class="screen active">
-      <div class="lobby-card">
+      <div class="lobby-card" id="joinCard">
         <h2>ルームに参加</h2>
         
         <div class="form-group">
@@ -37,6 +37,55 @@
         </div>
 
         <button id="joinBtn" class="btn primary-btn full-width">ロビーに入る</button>
+      </div>
+
+      <!-- ゲーム設定カード（ホスト向け＆共有） -->
+      <div class="lobby-card settings-card" id="gameSettingsSection" style="display: none;">
+        <h3>⚙️ ゲーム設定</h3>
+
+        <div class="form-group">
+          <label>対戦モード</label>
+          <div class="mode-selector-group" id="modeSelectorGroup">
+            <button class="mode-chip active" data-mode="team2v2">🛡️ チーム戦 (2v2)</button>
+            <button class="mode-chip" data-mode="team3v3">🛡️ チーム戦 (3v3)</button>
+            <button class="mode-chip" data-mode="ffa">⚔️ 個人戦 (FFA)</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="themeSelect">マップテーマ</label>
+          <select id="themeSelect" class="form-select">
+            <option value="cyber">⚡ サイバー・マトリクス (Cyber Matrix)</option>
+            <option value="ruins">🌿 古代エメラルド遺跡 (Emerald Ruins)</option>
+            <option value="magma">🌋 マグマ要塞 (Magma Foundry)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- チーム選択セクション（チーム戦モード時） -->
+      <div class="lobby-card teams-container" id="teamSelectionSection" style="display: none;">
+        <h3>⚔️ チーム分け</h3>
+        <div class="teams-grid">
+          <!-- Team Blue -->
+          <div class="team-panel team-blue-panel">
+            <div class="team-header">
+              <span class="team-title">🔵 Team Blue</span>
+              <span class="team-count" id="blueTeamCount">0/2</span>
+            </div>
+            <ul id="blueTeamList" class="team-roster"></ul>
+            <button class="btn team-join-btn blue-btn" id="joinBlueBtn">青チームに参加</button>
+          </div>
+
+          <!-- Team Red -->
+          <div class="team-panel team-red-panel">
+            <div class="team-header">
+              <span class="team-title">🔴 Team Red</span>
+              <span class="team-count" id="redTeamCount">0/2</span>
+            </div>
+            <ul id="redTeamList" class="team-roster"></ul>
+            <button class="btn team-join-btn red-btn" id="joinRedBtn">赤チームに参加</button>
+          </div>
+        </div>
       </div>
 
       <!-- 招待・QRコード表示エリア -->
@@ -59,9 +108,12 @@
         </div>
       </div>
 
-      <!-- 待機中プレイヤーリスト -->
+      <!-- 待機中プレイヤーリスト（FFAまたは全体一覧） -->
       <div class="lobby-card players-card" id="lobbyPlayersSection" style="display: none;">
-        <h3>参加プレイヤー (<span id="playerCount">0</span>/8)</h3>
+        <div class="lobby-players-header">
+          <h3>参加プレイヤー (<span id="playerCount">0</span>/8)</h3>
+          <span class="room-badge" id="currentRoomBadge">Room: main</span>
+        </div>
         <ul id="lobbyPlayerList" class="player-list"></ul>
 
         <div class="host-actions">
@@ -73,6 +125,21 @@
 
     <!-- ゲーム画面 -->
     <div id="gameScreen" class="screen">
+      <!-- チーム対戦ヘッダー（チーム戦時のみ表示） -->
+      <div id="teamMatchHeader" class="team-match-header" style="display: none;">
+        <div class="team-bar blue-team-bar">
+          <div class="team-bar-name">🔵 Team Blue</div>
+          <div class="team-bar-score" id="blueTeamScore">0</div>
+          <div class="team-members-status" id="blueTeamMembers"></div>
+        </div>
+        <div class="vs-badge">VS</div>
+        <div class="team-bar red-team-bar">
+          <div class="team-members-status" id="redTeamMembers"></div>
+          <div class="team-bar-score" id="redTeamScore">0</div>
+          <div class="team-bar-name">🔴 Team Red</div>
+        </div>
+      </div>
+
       <!-- ゲームHUD -->
       <div class="game-hud">
         <div class="hud-item player-info">
@@ -99,11 +166,41 @@
             <span class="stat-icon">⚡</span>
             <span id="statKickText">KICK OFF</span>
           </div>
+          <!-- 蘇生パワーバッジ -->
+          <div class="stat-badge revive-badge" id="statReviveBadge" title="仲間復活パワー (1回使い切り)">
+            <span class="stat-icon">💖</span>
+            <span id="statReviveText">REVIVE (1)</span>
+          </div>
         </div>
+
+        <!-- HUD蘇生アクションボタン（PC用クリックでも発動可） -->
+        <button id="hudReviveBtn" class="hud-revive-btn" style="display: none;">
+          💖 味方を復活 [R]
+        </button>
+
+        <!-- オプションメニューボタン [ESC] -->
+        <button id="hudOptionsBtn" class="hud-options-btn" title="オプションメニュー [ESC]">
+          ⚙️ [ESC]
+        </button>
 
         <!-- スコアボード一覧 -->
         <div class="hud-item score-list" id="hudScoreList"></div>
       </div>
+
+      <!-- マップ変更投票バナー -->
+      <div id="mapVoteBanner" class="map-vote-banner" style="display: none;">
+        <div class="vote-info">
+          <span class="vote-title" id="voteBannerTitle">🗳️ 投票中: マップ変更</span>
+          <span class="vote-status" id="voteBannerStatus">賛成: 1 / 反対: 0</span>
+        </div>
+        <div class="vote-actions">
+          <button id="voteYesBtn" class="btn vote-yes-btn">✅ 賛成</button>
+          <button id="voteNoBtn" class="btn vote-no-btn">❌ 反対</button>
+        </div>
+      </div>
+
+      <!-- 通知トースト / コンバットログ -->
+      <div id="combatToast" class="combat-toast"></div>
 
       <!-- キャンバス表示領域 -->
       <div class="canvas-wrapper">
@@ -123,6 +220,11 @@
         </div>
 
         <div class="action-buttons">
+          <!-- 蘇生ボタン（パワー所持時のみアクティブ） -->
+          <button id="mobileReviveBtn" class="revive-action-btn" style="display: none;">
+            <span class="revive-symbol">💖</span>
+            <span class="revive-label">REVIVE</span>
+          </button>
           <button id="mobileBombBtn" class="bomb-action-btn">
             <span class="bomb-symbol">💣</span>
             <span class="bomb-label">BOMB</span>
@@ -136,7 +238,14 @@
       <div class="modal-content">
         <div class="modal-icon" id="modalIcon">🏆</div>
         <h2 id="modalTitle">VICTORY!</h2>
-        <p id="modalSubtitle">Player 1 が勝利しました！</p>
+        <p id="modalSubtitle">チームが勝利しました！</p>
+
+        <!-- チーム戦用スコアバー -->
+        <div id="modalTeamScores" class="modal-team-score-box" style="display: none;">
+          <span class="blue-score-text">🔵 Team Blue: <strong id="modalBlueScore">0</strong></span>
+          <span class="vs-divider">-</span>
+          <span class="red-score-text">🔴 Team Red: <strong id="modalRedScore">0</strong></span>
+        </div>
 
         <div class="modal-scores">
           <h3>現在のスコア</h3>
@@ -154,22 +263,52 @@
       <div class="modal-content help-content">
         <h2>🎮 操作方法 & ルール</h2>
         <div class="help-section">
-          <h3>【操作方法】</h3>
-          <p><strong>PC:</strong> 移動: <code>WASD</code> または <code>矢印キー</code> / 爆弾設置: <code>スペースキー</code></p>
-          <p><strong>スマホ:</strong> 画面下の仮想パッドで移動 & 💣ボタンで設置</p>
+          <h3>【基本操作】</h3>
+          <p><strong>PC:</strong> 移動: <code>WASD</code> または <code>矢印キー</code> / 爆弾設置: <code>スペースキー</code> / 味方復活: <code>Rキー</code> / メニュー: <code>ESC</code></p>
+          <p><strong>スマホ:</strong> 画面下の仮想パッドで移動 & 💣ボタンで設置 & 💖ボタンで復活</p>
         </div>
         <div class="help-section">
-          <h3>【メカニクス】</h3>
-          <p><strong>⚡ 爆弾キック:</strong> キック能力を持つプレイヤーは、爆弾に向かって歩くことで爆弾を前方に滑らせることができます！</p>
-          <p><strong>アイテム:</strong> ブロックを破壊するとパワーアップが出現！</p>
+          <h3>【🛡️ チーム戦ルール】</h3>
+          <p><strong>フレンドリーファイア:</strong> 爆風は<strong>敵だけでなく味方にも当たります！</strong> 味方を巻き込まないよう息を合わせて戦いましょう。</p>
+          <p><strong>💖 仲間復活パワー（使い切り）:</strong> ブロックからドロップするハート（💖）を取得すると、倒れた味方を<strong>1回だけ即時蘇生</strong>できます！</p>
+          <p>蘇生した仲間は<strong>3秒間の無敵バリア</strong>をまとい、安全に戦線復帰できます。（※パワーは使用後消滅します）</p>
+        </div>
+        <div class="help-section">
+          <h3>【アイテム一覧】</h3>
           <ul>
+            <li>💖 <strong>リバイブ:</strong> 倒れた味方を復活！(1回使い切り)</li>
             <li>🔥 <strong>ファイア:</strong> 爆風の射程 +1</li>
             <li>💣 <strong>ボム:</strong> 置ける爆弾の数 +1</li>
             <li>👟 <strong>スピード:</strong> 移動速度 +0.5</li>
-            <li>⚡ <strong>キック:</strong> 爆弾を押し出すキック能力解放！</li>
+            <li>⚡ <strong>キック:</strong> 爆弾に向かって歩くと爆弾を前方にキック！</li>
           </ul>
         </div>
         <button id="closeHelpBtn" class="btn secondary-btn full-width">閉じる</button>
+      </div>
+    </div>
+
+    <!-- ESCメニュー / ポーズモーダル -->
+    <div id="pauseModal" class="modal-overlay">
+      <div class="modal-content pause-content">
+        <h2>⏸️ メニュー</h2>
+        <p class="pause-subtitle">ゲームは進行中です</p>
+
+        <div class="pause-actions">
+          <button id="pauseResumeBtn" class="btn start-btn full-width">▶️ ゲームに戻る</button>
+
+          <div class="pause-divider"></div>
+
+          <h3>🗺️ マップ変更を提案</h3>
+          <div class="map-vote-options">
+            <button class="btn map-vote-btn" data-vote-theme="cyber">⚡ サイバー</button>
+            <button class="btn map-vote-btn" data-vote-theme="ruins">🌿 エメラルド</button>
+            <button class="btn map-vote-btn" data-vote-theme="magma">🌋 マグマ</button>
+          </div>
+
+          <div class="pause-divider"></div>
+
+          <button id="pauseGiveUpBtn" class="btn danger-btn full-width">🏳️ 降参する</button>
+        </div>
       </div>
     </div>
   </div>
