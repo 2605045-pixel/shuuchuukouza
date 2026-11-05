@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
   // ブラウザの現在のオリジン（Codespaces公開URLまたはローカルURL）を自動参照して接続
+  // transports を websocket のみに限定し、HTTP Long-Polling による遅延を回避する
   const socket = io(window.location.origin, {
-    transports: ['websocket', 'polling'],
+    transports: ['websocket'],
   });
 
   socket.on('connect_error', (err) => {
@@ -12,6 +13,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentRoomId = 'main';
   let isHost = false;
   let currentGameState = null;
+
+  // ===== クライアントサイド予測 & 補間 =====
+  // 自プレイヤーの予測座標（サーバー応答を待たずにクライアント側で計算）
+  const localPrediction = { x: null, y: null, facing: 'down', isMoving: false };
+  // 定数（サーバー側 constants.js と同期すること）
+  const CLIENT_TILE_SIZE = 48;
+  const CLIENT_BASE_SPEED = 3.2;
+  // 他プレイヤーの補間用バッファ（id => { targetX, targetY, renderX, renderY, facing, isMoving }）
+  const remotePlayerStates = new Map();
+
 
   // DOM要素
   const lobbyScreen = document.getElementById('lobbyScreen');
@@ -60,14 +71,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const renderer = new window.GameRenderer(canvas);
 
   // 入力マネージャー
+  // クライアントサイド予測: キー入力時にサーバー送信と同時にローカル予測状態を即座に更新
   const inputManager = new window.InputManager(
     (inputState) => {
       socket.emit('player_input', inputState);
+      // 予測: 移動方向・向きをローカルに即時反映
+      localPrediction.isMoving = inputState.up || inputState.down || inputState.left || inputState.right;
+      if (inputState.up) localPrediction.facing = 'up';
+      else if (inputState.down) localPrediction.facing = 'down';
+      else if (inputState.left) localPrediction.facing = 'left';
+      else if (inputState.right) localPrediction.facing = 'right';
     },
     () => {
       socket.emit('place_bomb');
     }
   );
+
 
   // URLパラメータ（?room=xxx&name=yyy）のチェック
   const urlParams = new URLSearchParams(window.location.search);
@@ -283,9 +302,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     gameOverModal.classList.remove('active');
   });
 
-  // ゲーム状態更新（毎フレーム）
+  // ゲーム状態更新（サーバーから受信）
   socket.on('game_state', (state) => {
+    // grid が省略されている tick では前回受信したグリッドを維持する（差分送信対応）
+    if (!state.grid && currentGameState && currentGameState.grid) {
+      state.grid = currentGameState.grid;
+    }
     currentGameState = state;
+
 
     if (state.state === 'PLAYING') {
       if (!gameScreen.classList.contains('active')) {
@@ -294,10 +318,54 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // キャンバス描画
-    renderer.render(state, myPlayerId);
+    // === クライアントサイド予測の初期化・補正 ===
+    if (state.players && myPlayerId) {
+      const me = state.players.find(p => p.id === myPlayerId);
+      if (me) {
+        // サーバーから受け取った座標が予測と大きくずれていたら補正（ラバーバンディング）
+        const dx = localPrediction.x !== null ? Math.abs(localPrediction.x - me.x) : 0;
+        const dy = localPrediction.y !== null ? Math.abs(localPrediction.y - me.y) : 0;
+        if (localPrediction.x === null || dx > CLIENT_TILE_SIZE || dy > CLIENT_TILE_SIZE) {
+          // 初回 or 大幅ずれ: サーバー値を即時採用
+          localPrediction.x = me.x;
+          localPrediction.y = me.y;
+        }
+        // ゆるやかなラバーバンディング: 毎フレームで少しずつサーバー値に近づける
+        localPrediction.serverX = me.x;
+        localPrediction.serverY = me.y;
+      }
+    }
 
-    // 自プレイヤーのHUD情報更新
+    // === 他プレイヤーの補間バッファ更新 ===
+    if (state.players) {
+      state.players.forEach(p => {
+        if (p.id === myPlayerId) return;
+        const existing = remotePlayerStates.get(p.id);
+        if (!existing) {
+          // 初回登録: 即時表示座標もサーバー値で初期化
+          remotePlayerStates.set(p.id, {
+            targetX: p.x, targetY: p.y,
+            renderX: p.x, renderY: p.y,
+            facing: p.facing, isMoving: p.isMoving,
+            alive: p.alive,
+          });
+        } else {
+          // 目標座標をサーバー値に更新（描画は rAF で Lerp）
+          existing.targetX = p.x;
+          existing.targetY = p.y;
+          existing.facing = p.facing;
+          existing.isMoving = p.isMoving;
+          existing.alive = p.alive;
+        }
+      });
+      // 退出プレイヤーを削除
+      const currentIds = new Set(state.players.map(p => p.id));
+      for (const id of remotePlayerStates.keys()) {
+        if (!currentIds.has(id)) remotePlayerStates.delete(id);
+      }
+    }
+
+    // HUD・スコアボード更新（描画は rAF ループで行うため renderer.render はここで呼ばない）
     const me = state.players ? state.players.find(p => p.id === myPlayerId) : null;
     if (me) {
       myColorDot.style.backgroundColor = me.color;
@@ -312,7 +380,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       if (me.stats) {
-        // 設置可能数
         statBombs.textContent = me.stats.maxBombs;
         statRange.textContent = me.stats.bombRange;
         statSpeed.textContent = me.stats.speed.toFixed(1);
@@ -338,6 +405,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
   });
+
 
   // サウンドイベント
   socket.on('sound_event', (evt) => {
@@ -399,4 +467,90 @@ document.addEventListener('DOMContentLoaded', async () => {
   socket.on('error_message', (msg) => {
     alert(msg);
   });
+
+  // =====================================================================
+  // requestAnimationFrame 描画ループ
+  // - 自プレイヤー: クライアントサイド予測座標をフレームごとに更新して即時表示
+  // - 他プレイヤー: サーバー受信座標へ Lerp 補間してカクツキを抑制
+  // =====================================================================
+  const LERP_FACTOR = 0.25; // 補間強度（0: 即時追従, 1: 動かない）
+  const RUBBER_BAND_FACTOR = 0.15; // 自プレイヤーのサーバー補正強度
+  let lastRafTime = 0;
+
+  function gameLoop(timestamp) {
+    requestAnimationFrame(gameLoop);
+
+    if (!currentGameState || currentGameState.state !== 'PLAYING') return;
+
+    // ===== 自プレイヤーのクライアントサイド予測 =====
+    const input = inputManager.state;
+    if (localPrediction.x !== null && myPlayerId) {
+      let pdx = 0, pdy = 0;
+      if (input.up) pdy -= 1;
+      if (input.down) pdy += 1;
+      if (input.left) pdx -= 1;
+      if (input.right) pdx += 1;
+
+      // 移動速度は現在のサーバー管理速度を参照（stats.speed）
+      const me = currentGameState.players
+        ? currentGameState.players.find(p => p.id === myPlayerId)
+        : null;
+      const spd = (me && me.stats) ? me.stats.speed : CLIENT_BASE_SPEED;
+
+      if (pdx !== 0 && pdy !== 0) { pdx *= 0.7071; pdy *= 0.7071; }
+
+      localPrediction.x += pdx * spd;
+      localPrediction.y += pdy * spd;
+
+      // ラバーバンディング: サーバー権威座標に向けてゆっくり補正
+      if (localPrediction.serverX !== undefined) {
+        localPrediction.x += (localPrediction.serverX - localPrediction.x) * RUBBER_BAND_FACTOR;
+        localPrediction.y += (localPrediction.serverY - localPrediction.y) * RUBBER_BAND_FACTOR;
+      }
+    }
+
+    // ===== 他プレイヤーの Lerp 補間 =====
+    for (const rs of remotePlayerStates.values()) {
+      rs.renderX += (rs.targetX - rs.renderX) * LERP_FACTOR;
+      rs.renderY += (rs.targetY - rs.renderY) * LERP_FACTOR;
+    }
+
+    // ===== 合成した gameState でレンダリング =====
+    // players 配列を「予測/補間済み座標」で上書きしてレンダラーに渡す
+    const renderState = {
+      ...currentGameState,
+      players: currentGameState.players
+        ? currentGameState.players.map(p => {
+            if (p.id === myPlayerId) {
+              // 自プレイヤー: 予測座標を使用
+              return {
+                ...p,
+                x: localPrediction.x !== null ? Math.round(localPrediction.x) : p.x,
+                y: localPrediction.y !== null ? Math.round(localPrediction.y) : p.y,
+                facing: localPrediction.facing,
+                isMoving: localPrediction.isMoving,
+              };
+            } else {
+              // 他プレイヤー: Lerp 補間座標を使用
+              const rs = remotePlayerStates.get(p.id);
+              if (rs) {
+                return {
+                  ...p,
+                  x: Math.round(rs.renderX),
+                  y: Math.round(rs.renderY),
+                  facing: rs.facing,
+                  isMoving: rs.isMoving,
+                };
+              }
+              return p;
+            }
+          })
+        : [],
+    };
+
+    renderer.render(renderState, myPlayerId);
+  }
+
+  requestAnimationFrame(gameLoop);
 });
+

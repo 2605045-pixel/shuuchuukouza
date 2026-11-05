@@ -13,6 +13,8 @@ class GameMap {
   generate() {
     this.grid = [];
     this.items = [];
+    this.dirty = true; // generate直後は必ずgridを全クライアントへ送信する
+
 
     // スポーン地点とその隣接マス（プレイヤーが動けるようブロックを置かない）
     const protectedCells = new Set();
@@ -74,6 +76,8 @@ class GameMap {
     if (!this.isInside(c, r)) return null;
     if (this.grid[r][c] === TILE_TYPES.BLOCK) {
       this.grid[r][c] = TILE_TYPES.EMPTY;
+      this.dirty = true; // ブロック破壊でマップが変化したのでgrid送信を要求
+
 
       // 約50%の確率でアイテムドロップ
       if (Math.random() < 0.50) {
